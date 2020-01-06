@@ -19,10 +19,11 @@ class Choromosome:
         m = 0 # number_of_edges_twice
         for index, node_color in enumerate(colors):
             G.add_node(index, color=node_color)
-            m += len(adjacency_list[index])
-            for neighbour in adjacency_list[index]:
-                G.add_edge(index, neighbour) 
-                sum += self.__sigma(node_color ,colors[neighbour])  # set fitness 
+            if index < len(adjacency_list):
+                m += len(adjacency_list[index])
+                for neighbour in adjacency_list[index]:
+                    G.add_edge(index, neighbour) 
+                    sum += self.__sigma(node_color ,colors[neighbour])  # set fitness 
         return sum / m , G
     
     def __sigma(self, src, des):
