@@ -8,9 +8,7 @@ class City:
     
     def __init__(self, name= 'city'):
         self.__name = name
-        print("rarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr" + str(random.randint(0,100)))
         self.color = random.choice(['r', 'b', 'g', 'y'] )
-        print(self.color)
         self.__edges = []
 
     def __eq__(self, value):

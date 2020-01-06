@@ -1,6 +1,5 @@
 class Graph:
     def __init__(self):
-        print("in the graph init ......................")
         self.nodes = []
 
     def add_node(self, node):
