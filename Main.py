@@ -1,6 +1,7 @@
 import numpy as np
 from Chromosome import *
 import random
+from Word_Map import *
 
 chromosomes = []
 for _ in range(100):
@@ -12,7 +13,7 @@ def parent_selection(input_population, number_of_pairs):
     for chromosome in input_population:
         fitness_sum += chromosome.fitness_function()
     probabilities = np.array([chromosome.fitness_function() / fitness_sum for chromosome in input_population])
-    return np.random.choice(input_population, number_of_pairs, p=probabilities)
+    return np.random.choice(input_population, number_of_pairs, p=probabilities).tolist()
 
 def crossover(first, secend):
     random_number = random.randint(0, len(first.graph.nodes))
@@ -30,12 +31,12 @@ def crossover(first, secend):
 def select_parent(input_population):
     new_chromosomes = []
     for i in range(len(input_population)):
-        first_parnet = np.random.choice(input_population, 1)
+        first_parnet = input_population[random.randint(0, len(input_population))-1].graph.nodes
         secend_parent = first_parnet
         while first_parnet == secend_parent:
-            secend_parent = np.random.choice(input_population, 1)
+            secend_parent = input_population[random.randint(0, len(input_population)-1)].graph.nodes
         new_chromosomes.extend(crossover(first_parnet, secend_parent))
 
 
-for i in (parent_selection(chromosomes,4)):
-    print(i)
+# select_parent(parent_selection(chromosomes,4))
+print(word_Map())
