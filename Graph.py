@@ -1,5 +1,6 @@
 class Graph:
     def __init__(self):
+        print("in the graph init ......................")
         self.nodes = []
 
     def add_node(self, node):
@@ -14,7 +15,7 @@ class Graph:
             if des not in self.nodes:
                 self.add_node(des)
             self.nodes[self.nodes.index(des)].get_edges().append(node)
-    
+
     def get_adj(self, node):
         return self.nodes[self.nodes.index(node)].get_edges()
 
@@ -22,4 +23,5 @@ class Graph:
         text = ""
         for city in self.nodes:
             text += str(city)
+            text += "\n"
         return text

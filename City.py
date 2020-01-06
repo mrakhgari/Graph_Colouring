@@ -1,13 +1,16 @@
 # city class, used as nodes in graph
 # contains name of city and color
 
-import numpy as np
+# import numpy as np
+import random
 
 class City:
     
     def __init__(self, name= 'city'):
         self.__name = name
-        self.color = np.random.choice(['r', 'b', 'g', 'y'], 1)
+        print("rarrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrrr" + str(random.randint(0,100)))
+        self.color = random.choice(['r', 'b', 'g', 'y'] )
+        print(self.color)
         self.__edges = []
 
     def __eq__(self, value):
@@ -25,8 +28,8 @@ class City:
     
     def __str__(self):
         text = "city: " + str(self.__name) + ", color: " + str(self.color) +"\n"
-        # for city in self.__edges:
-            # text += str(city) + ", "
+        for city in self.__edges:
+            text += str(city.__name) + ", "
         return text
 
     def __hash__(self):
