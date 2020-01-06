@@ -6,7 +6,7 @@ n_nodes = 6  # Number of countries = number of nodes in a graph
 number_of_edges, graph_list = craete_world(n_nodes)  # create iran map
 population_size = 4 # number of initial population
 muniationRate = 0.2
-n_generations = 180 #  times
+n_generations = 50 #  times
 number_of_parents_to_keep = 1  # In each generation update a certain number of random parents is kept
 
 # MAIN ALGORITHM

@@ -1,6 +1,3 @@
-""" Helper Functions and Objects
-"""
-
 import matplotlib.pyplot as plt  # Drawing graphs
 import numpy as np
 import random
@@ -39,17 +36,38 @@ class Choromosome:
         nx.draw_networkx(self.graph_nx, with_labels=True, node_color=colors_nodes)
         plt.draw()
 
+    def __str__(self):
+        return self.colors.__str__() + str(self.fitness)
 
 def parent_selection(input_population, number_of_pairs):
     input_n = len(input_population)
     
     fitness_sum = sum([person.fitness for person in input_population])
     probabilities = np.array([person.fitness / fitness_sum for person in input_population])
+    Ixs = []
+    Iys = []
 
-    I_x = np.random.choice(np.arange(0, input_n), number_of_pairs, p=probabilities)
-    I_y = np.random.choice(np.arange(0, input_n), number_of_pairs, p=probabilities)
+    for i in range(input_n):
+        I_x = np.random.choice(np.arange(0, input_n), 1, p=probabilities)[0]
+        I_y = I_x
+        while I_y == I_x:
+            I_y = np.random.choice(np.arange(0, input_n), 1, p=probabilities)[0]
+        Ixs.append(I_x)
+        Iys.append(I_y)
+    return [(input_population[Ixs[i]], input_population[Iys[i]]) for i in range(number_of_pairs)]
 
-    return [(input_population[I_x[i]], input_population[I_y[i]]) for i in range(number_of_pairs)]
+
+def mutation(node):
+    n_nodes = node.n_nodes
+    node1 = np.random.randint(0, n_nodes)
+    
+    mapper = {'r': ['b', 'y','g'], 'b': ['r','y' ,'g'], 'g': ['r','y', 'b'], 'y' :['b','g','r']}
+
+    child_one_colors = node.colors
+
+    child_one_colors = child_one_colors[:node1] + np.random.choice(mapper[child_one_colors[node1]],
+                                                                    1)[0] + child_one_colors[node1 + 1:]
+    return child_one_colors
 
 
 # Define a genetic operator
@@ -58,37 +76,16 @@ def genetic_operator(pair_of_parents, method='SPC'):
     n_nodes = pair_of_parents[0].n_nodes
     al = pair_of_parents[0].adjacency_list
 
-    if method == 'mutation':
-        # this method does not need a pair of parents, it inputs only one person
-        # Idea:
-
-        node1 = np.random.randint(0, n_nodes)
-        node2 = np.random.randint(0, n_nodes)
-
-        mapper = {'r': ['b', 'y','g'], 'b': ['r','y' ,'g'], 'g': ['r','y', 'b'], 'y' :['b','g','r']}
-
-        child_one_colors = pair_of_parents[0].colors
-        child_two_colors = pair_of_parents[1].colors
-
-        child_one_colors = child_one_colors[:node1] + np.random.choice(mapper[child_one_colors[node1]],
-                                                                       1)[0] + child_one_colors[node1 + 1:]
-        child_two_colors = child_two_colors[:node2] + np.random.choice(mapper[child_two_colors[node2]],
-                                                                       1)[0] + child_two_colors[node2 + 1:]
-
-        return Choromosome(child_one_colors, al), Choromosome(child_two_colors, al)
-
-    if method == 'SPC':  # Single point crossover
-        # Step 1) Select a random point
-        # Step 2) All colours to the left will be from parent 1, all parent to the right are from parent 2
-        point = np.random.randint(0, n_nodes)
-
-        parent_1_colors = pair_of_parents[0].colors
-        parent_2_colors = pair_of_parents[0].colors
-
-        child_one_colors = parent_1_colors[:point] + parent_2_colors[point:]
-        child_two_colors = parent_2_colors[:point] + parent_1_colors[point:]
-
-        return (Choromosome(child_one_colors, al), Choromosome(child_two_colors, al))
+    # Step 1) Select a random point
+    # Step 2) All colours to the left will be from parent 1, all parent to the right are from parent 2
+    point = np.random.randint(0, n_nodes)
+    parent_1_colors = pair_of_parents[0].colors
+    parent_2_colors = pair_of_parents[1].colors
+    child_one_colors = []
+    child_one_colors = parent_1_colors[:point] + parent_2_colors[point:]
+    child_two_colors = parent_2_colors[:point] + parent_1_colors[point:]
+    
+    return (Choromosome(child_one_colors, al), Choromosome(child_two_colors, al))
 
 
 # Population update
@@ -100,11 +97,7 @@ def population_update(input_population, output_population_size,
 
     input_population.sort(key=lambda x: x.fitness, reverse=True)
     input_population = input_population[:int(input_population_size / number_to_keep)]
-
       
-    # while len(output_population)<= input_population_size / number_to_keep:
-        # output_population.extend(np.random.choice(input_population, 1)) # select_parent
-        
     list_of_parent_pairs = parent_selection(input_population, input_population_size // 2)
 
     pair_index = 0
@@ -114,15 +107,10 @@ def population_update(input_population, output_population_size,
         output_population.append(child_2)
         pair_index += 1
 
-    list_of_parent_pairs = parent_selection(output_population, output_population_size // 2)
+    for i in range(int (muniationRate * output_population_size * output_population[0].n_nodes)):
+        ran = random.randint(0, len(output_population)-1)
+        output_population[ran].colors = mutation(output_population[ran])
     
-    # input_population = []
-    # for i in range(int (muniationRate * output_population_size)):
-        # child_1, child_2  = genetic_operator(list_of_parent_pairs[pair_index], 'mutation')
-        # input_population.append(child_1)
-        # input_population.append(child_2)
-    
-    # output_population = input_population
     return output_population
 
 
@@ -152,12 +140,13 @@ def evolution(input_population, n_generations, population_size, number_to_keep=1
     results_fittest = []
 
     for i in range(n_generations):
-        print(len(input_population))
         fitness_list, ix, fittest_coloring = find_fittest(input_population)
         results_fitness.append(fitness_list)
         results_fittest.append(fittest_coloring)
         # Print highest fitness
         print('The fittest person is: ' + str(max(fitness_list)))
+        if fitness_list[ix] == 1:
+            return results_fitness, results_fittest
 
         # Update
         output_population = population_update(input_population, population_size, number_to_keep=number_to_keep, muniationRate = muniationRate)
@@ -185,8 +174,4 @@ def visualize_results(results_fitness, results_fittest, number_of_generations_to
         results_fittest[order].print_graph(figure_number=i,
                                         figure_title='generation: ' + str(order + 1) + ', fitness: ' + str(
                                             results_fittest[order].fitness))
-        # Print histogram
-        # plt.figure(-i - 1)  # means nothing
-        # plt.hist(results_fitness[order])
-        # plt.title('Generation_number: ' + str(order + 1))
         plt.draw()
