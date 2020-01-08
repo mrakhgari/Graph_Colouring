@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt  # Drawing graphs
 import numpy as np
 import random
 import networkx as nx
+import math as math
 
 colours = ['r', 'g', 'b', 'y']
 
@@ -13,6 +14,18 @@ class Choromosome:
         self.n_nodes = len(self.colors)
         self.fitness, self.graph_nx = self.__convert_to_nxgraph(self.colors, self.adjacency_list)
 
+    def update_fitness(self):
+        sum = 0
+        m = 0 # number_of_edges_twice
+        for index, node_color in enumerate(self.colors):
+            if index < len(self.adjacency_list):
+                m += len(self.adjacency_list[index])
+                for neighbour in self.adjacency_list[index]:
+                    sum += self.__sigma(node_color ,self.colors[neighbour])  # set fitness 
+        self.fitness = sum / m 
+    
+    def __sigma(self, src, des):
+        return 0 if src == des else 1 
     def __convert_to_nxgraph(self, colors, adjacency_list):
         G = nx.Graph()
         sum = 0
@@ -61,11 +74,9 @@ def parent_selection(input_population, number_of_pairs):
 def mutation(node):
     n_nodes = node.n_nodes
     node1 = np.random.randint(0, n_nodes)
-    
     mapper = {'r': ['b', 'y','g'], 'b': ['r','y' ,'g'], 'g': ['r','y', 'b'], 'y' :['b','g','r']}
-
     child_one_colors = node.colors
-
+  
     child_one_colors = child_one_colors[:node1] + np.random.choice(mapper[child_one_colors[node1]],
                                                                     1)[0] + child_one_colors[node1 + 1:]
     return child_one_colors
@@ -94,24 +105,39 @@ def population_update(input_population, output_population_size,
                       number_to_keep=1, muniationRate = 0.2):
 
     input_population_size = len(input_population)
-    output_population = []
 
     input_population.sort(key=lambda x: x.fitness, reverse=True)
-    input_population = input_population[:int(input_population_size / number_to_keep)]
-      
-    list_of_parent_pairs = parent_selection(input_population, input_population_size // 2)
+  
+    parent = input_population[:int(input_population_size // number_to_keep)]
+    print("parent size is : " + str(input_population_size// number_to_keep ))
+    output_population = []
+    list_of_parent_pairs = parent_selection(parent, len(parent) // 2)
 
     pair_index = 0
-    while pair_index < len(list_of_parent_pairs):
+    output_population.extend(parent)
+    print("len of parent " + str(len(list_of_parent_pairs)))
+    while True:
         child_1, child_2 = genetic_operator(list_of_parent_pairs[pair_index])
-        output_population.append(child_1)
-        output_population.append(child_2)
+        if (len(output_population) < input_population_size):
+            output_population.append(child_1)
+        else:
+            break
+        if (len(output_population) < input_population_size):
+            output_population.append(child_2)
+        else:
+            break
         pair_index += 1
-
-    for i in range(int (muniationRate * output_population_size * output_population[0].n_nodes)):
+        pair_index %= len(list_of_parent_pairs)
+    
+    for _ in range(int (muniationRate * output_population_size * output_population[0].n_nodes)):
         ran = random.randint(0, len(output_population)-1)
         output_population[ran].colors = mutation(output_population[ran])
-    
+        output_population[ran].update_fitness()
+    print(" after update : ")
+    for i in output_population:
+        print(i)
+
+    print(" out put printed ")
     return output_population
 
 
@@ -131,6 +157,8 @@ def generate_random_initial_population(population_size, n_nodes, graph):
 # Find fittest
 def find_fittest(input_population):
     fitness_list = [person.fitness for person in input_population]
+    print(fitness_list)
+    print("###############################3")
     ix = np.argmax(fitness_list)
     return fitness_list, ix, input_population[ix]
 
@@ -139,40 +167,71 @@ def find_fittest(input_population):
 def evolution(input_population, n_generations, population_size, number_to_keep=1, muniationRate = 0.2):
     results_fitness = []
     results_fittest = []
-
+    res = []
+    res.append([])
+    res.append([])
+    res.append([])
+   
     for i in range(n_generations):
+        
         fitness_list, ix, fittest_coloring = find_fittest(input_population)
         results_fitness.append(fitness_list)
         results_fittest.append(fittest_coloring)
         # Print highest fitness
-        print('The fittest person is: ' + str(max(fitness_list)))
-        if fitness_list[ix] == 1:
-            return results_fitness, results_fittest
+        print(len(fitness_list))
+        for i in fitness_list:
+            print(i)
+        print('The fittest person is: ' + str(max(fitness_list)) + " in the " + str(len(input_population)))
+        res[0].append(max(fitness_list))
+        res[1].append(min(fitness_list))
+        res[2].append(sum(fitness_list) / len(fitness_list))
+        if fitness_list[ix] == 1  :
+            return results_fitness, results_fittest, res
 
         # Update
         output_population = population_update(input_population, population_size, number_to_keep=number_to_keep, muniationRate = muniationRate)
         input_population = output_population
-        
+        # if len (input_population) == 1 : 
+            # return results_fitness, results_fittest, res 
 
-    return results_fitness, results_fittest
+    return results_fitness, results_fittest, res
 
 
 # Visualize results
-def visualize_results(results_fitness, results_fittest, number_of_generations_to_visualize=3):
+def visualize_results(results_fitness, results_fittest, res, number_of_generations_to_visualize=3):
     # Important
     total_generations = len(results_fitness)
 
     # Pick generations to visualize
-    I = list(
-        np.random.choice(list(range(1, total_generations - 1)), number_of_generations_to_visualize - 2))
-    I += [0, total_generations - 1]
+    # I = list(
+        # np.random.choice(list(range(1, total_generations - 1)), number_of_generations_to_visualize - 2))
+    I = [1, total_generations -1 ]
     I.sort()
     print("Visualized generations: ",end='')
     print(I)
+    plt.figure(-1)
+
+    plt.plot(range(len(res[0])),res[0], label="Best")
+    plt.plot(range(len(res[1])), res[1], label="Worst")
+    # plt.draw()
+    plt.plot(range(len(res[2])), res[2], label="Average")
+    # plt.draw()
+    plt.xlabel('Generation')
+    plt.ylabel('Fitness')
+    plt.legend()
+    plt.draw()
+    # plt.show()
 
     # Main
-    for i, order in enumerate(I):
-        results_fittest[order].print_graph(figure_number=i,
-                                        figure_title='generation: ' + str(order + 1) + ', fitness: ' + str(
-                                            results_fittest[order].fitness))
-        plt.draw()
+    i = total_generations - 1
+    # for i in range(total_generations):
+    results_fittest[i].print_graph(figure_number=i,
+                                        figure_title='generation: ' + str(i + 1) + ', fitness: ' + str(
+                                            results_fittest[i].fitness))
+        #  Print histogram
+        # plt.figure(-i - 1)  # means nothing
+        # plt.hist(results_fitness[i])
+        # plt.title('Generation_number: ' + str(i + 1))
+        # plt.draw()
+    plt.draw()
+   

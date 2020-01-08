@@ -11,7 +11,7 @@ class SimulatedAnnealing:
 
     def simulated_annealing(self, schedule, alpha):
         for t in range(1, int(10000000)):
-            T = schedule(1, alpha, t)
+            T = schedule(0.001, alpha, t)
             print("T is " + str(T) + " in time " + str(t)) 
             if T == 0: 
                 return self.current
@@ -21,9 +21,10 @@ class SimulatedAnnealing:
             if dE > 0 :
                 self.current = next
                 print("in first if")
-            elif np.random.uniform(0, 1) < math.e ** (dE/T):
+            if np.random.uniform(0, 1) < math.e ** (dE/T):
                 self.current = next
                 print("in second if")
 
     def find_successor(self):
-        return generate_random_initial_population(1,self.number_of_edges, self.graph_list)[0]
+        return Choromosome(mutation(self.current), self.graph_list)
+        # return generate_random_initial_population(1,self.number_of_edges, self.graph_list)[0]
